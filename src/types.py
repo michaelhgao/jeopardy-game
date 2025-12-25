@@ -1,10 +1,10 @@
-from enum import Enum
+from enum import Enum, auto
 from typing import Final
 
 
 class GameMode(Enum):
-    PLAY = "play"
-    EDIT = "edit"
+    PLAY = auto()
+    EDIT = auto()
 
 
 # Background color

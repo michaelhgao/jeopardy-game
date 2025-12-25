@@ -1,4 +1,2 @@
 save/load json
-abstract editing from ui to data models
 change build menu to use internal game state to draw
-

@@ -1,4 +1,5 @@
 import tkinter as tk
+from enum import Enum, auto
 from tkinter import filedialog, simpledialog
 from typing import Optional
 
@@ -17,6 +18,14 @@ from src.types import (
     TITLE_TEXT_COLOUR,
     GameMode,
 )
+
+
+class Screen(Enum):
+    MAIN_MENU = auto()
+    BOARD = auto()
+    QUESTION = auto()
+    ANSWER = auto()
+    TEAMS = auto()
 
 
 class JeopardyUi:
@@ -201,45 +210,55 @@ class JeopardyUi:
 
     def _edit_category(self, index: int) -> None:
         old_name = self.game.category_order[index]
+
         new_name: Optional[str] = simpledialog.askstring(
             "Edit Category", f"Rename '{old_name}':"
         )
-        if not new_name or new_name in self.game.questions:
+        if new_name is None:
             return
 
-        # Change dictionary key
-        self.game.questions[new_name] = self.game.questions.pop(old_name)
-        # Update order list at the same index
-        self.game.category_order[index] = new_name
+        success: bool = self.game.edit_category(index, new_name)
 
-        self._build_board(editable=True)
+        if success:
+            self._build_board(editable=True)
 
     def _edit_question(self, question: JeopardyQuestion) -> None:
         q_text: Optional[str] = simpledialog.askstring(
-            "Question", "Question:", initialvalue=question.question
+            "Question",
+            "Question:",
+            initialvalue=question.question,
         )
         if q_text is None:
             return
+
         a_text: Optional[str] = simpledialog.askstring(
-            "Answer", "Answer:", initialvalue=question.answer
+            "Answer",
+            "Answer:",
+            initialvalue=question.answer,
         )
         if a_text is None:
             return
+
         value: Optional[int] = simpledialog.askinteger(
-            "Value", "Point value:", initialvalue=question.value
+            "Value",
+            "Point value:",
+            initialvalue=question.value,
         )
         if value is None:
             return
+
         image_path: Optional[str] = filedialog.askopenfilename(
             title="Select image",
             filetypes=[("Image Files", "*.png *.jpg *.jpeg *.gif")],
         )
 
-        question.question = q_text
-        question.answer = a_text
-        question.value = value
-        if image_path:
-            question.image_path = image_path
+        self.game.edit_question(
+            question=question,
+            new_question=q_text,
+            new_answer=a_text,
+            new_value=value,
+            image_path=image_path,
+        )
 
         self._build_board(editable=True)
 
@@ -378,7 +397,7 @@ class JeopardyUi:
         ).pack(pady=10)
 
     def _assign_points(self, question: JeopardyQuestion, team: Team) -> None:
-        team.add_points(question.value)
+        self.game.add_points(team, question)
         self._build_board(editable=False)
 
     def _show_teams_points(self) -> None:

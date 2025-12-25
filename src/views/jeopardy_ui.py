@@ -4,21 +4,22 @@ from tkinter import filedialog, messagebox, simpledialog
 from typing import Optional
 
 from src.controllers.game_controller import GameController
-from src.misc.types import (
+from src.misc.button_factory import create_button
+from src.misc.themes import (
     ANSWER_TEXT_COLOUR,
     BG_COLOUR,
-    BTN_ACTIVE_COLOUR,
     BTN_COLOUR,
     BTN_TEXT_COLOUR,
-    CATEGORY_TEXT_COLOUR,
+    CATEGORY_BUTTON_THEME,
     FONT,
-    GRID_SIZE,
+    MAIN_MENU_BUTTON_THEME,
     QUESTION_ANSWERED_COLOUR,
+    QUESTION_BUTTON_THEME,
     QUESTION_TEXT_COLOUR,
+    SMALL_BUTTON_THEME,
     TITLE_TEXT_COLOUR,
-    Category,
-    GameMode,
 )
+from src.misc.types import GRID_SIZE, Category, GameMode
 from src.models.question import Question, QuestionEdit
 from src.models.team import Team
 
@@ -83,48 +84,32 @@ class JeopardyUi:
             bg=BG_COLOUR,
         ).pack(pady=40)
 
-        tk.Button(
+        create_button(
             self.main_frame,
             text="Play Mode",
-            width=16,
-            font=(FONT, 36, "bold"),
-            fg=BTN_TEXT_COLOUR,
-            bg=BTN_COLOUR,
-            activebackground=BTN_ACTIVE_COLOUR,
             command=self._play_mode,
+            theme=MAIN_MENU_BUTTON_THEME,
         ).pack(pady=10)
 
-        tk.Button(
+        create_button(
             self.main_frame,
             text="Edit Mode",
-            width=16,
-            font=(FONT, 36, "bold"),
-            fg=BTN_TEXT_COLOUR,
-            bg=BTN_COLOUR,
-            activebackground=BTN_ACTIVE_COLOUR,
             command=self._edit_mode,
+            theme=MAIN_MENU_BUTTON_THEME,
         ).pack(pady=10)
 
-        tk.Button(
+        create_button(
             self.main_frame,
             text="Save Board",
-            width=16,
-            font=(FONT, 36, "bold"),
-            fg=BTN_TEXT_COLOUR,
-            bg=BTN_COLOUR,
-            activebackground=BTN_ACTIVE_COLOUR,
             command=lambda: self.navigate(Screen.SAVE),
+            theme=MAIN_MENU_BUTTON_THEME,
         ).pack(pady=10)
 
-        tk.Button(
+        create_button(
             self.main_frame,
             text="Load Board",
-            width=16,
-            font=(FONT, 36, "bold"),
-            fg=BTN_TEXT_COLOUR,
-            bg=BTN_COLOUR,
-            activebackground=BTN_ACTIVE_COLOUR,
             command=lambda: self.navigate(Screen.LOAD),
+            theme=MAIN_MENU_BUTTON_THEME,
         ).pack(pady=10)
 
     def _render_board(self) -> None:
@@ -141,13 +126,13 @@ class JeopardyUi:
 
         # CATEGORY ROW
         for i, category in enumerate(categories):
-            btn = tk.Button(
+            btn = create_button(
                 self.main_frame,
                 text=category.name,
-                fg=CATEGORY_TEXT_COLOUR,
-                bg=BTN_COLOUR,
-                font=(FONT, 24, "bold"),
-                command=lambda c=category: self._edit_category(c) if editable else None,
+                theme=CATEGORY_BUTTON_THEME,
+                command=(
+                    lambda c=category: self._edit_category(c) if editable else None
+                ),
             )
             btn.grid(row=0, column=i, sticky="nsew", padx=2, pady=2)
             self.category_buttons.append(btn)
@@ -159,17 +144,18 @@ class JeopardyUi:
                 category = categories[col]
                 q = category.questions[row]
 
-                btn = tk.Button(
+                btn_bg = BTN_COLOUR if not q.answered else QUESTION_ANSWERED_COLOUR
+                btn = create_button(
                     self.main_frame,
                     text=f"${q.value}",
-                    fg=QUESTION_TEXT_COLOUR,
-                    bg=BTN_COLOUR if not q.answered else QUESTION_ANSWERED_COLOUR,
-                    font=(FONT, 24, "bold"),
+                    theme=QUESTION_BUTTON_THEME,
                     command=lambda q=q, editable=editable: (
                         self._edit_question(q)
                         if editable
                         else self.navigate(Screen.QUESTION, q)
                     ),
+                    bg=btn_bg,
+                    activebackground=btn_bg,
                 )
                 btn.grid(row=row + 1, column=col, sticky="nsew", padx=2, pady=2)
                 row_buttons.append(btn)
@@ -186,25 +172,19 @@ class JeopardyUi:
         self.main_frame.grid_rowconfigure(GRID_SIZE + 1, weight=0)
 
         # Back button
-        tk.Button(
+        create_button(
             bottom_frame,
             text="Back",
-            font=(FONT, 16, "bold"),
-            height=1,
-            bg=BTN_COLOUR,
-            fg=BTN_TEXT_COLOUR,
+            theme=SMALL_BUTTON_THEME,
             command=lambda: self.navigate(Screen.MAIN_MENU),
         ).pack(side=tk.LEFT, padx=5, pady=5)
 
         if not editable:
             # Teams / Points button
-            tk.Button(
+            create_button(
                 bottom_frame,
                 text="Teams / Points",
-                font=(FONT, 16, "bold"),
-                height=1,
-                bg=BTN_COLOUR,
-                fg=BTN_TEXT_COLOUR,
+                theme=SMALL_BUTTON_THEME,
                 command=lambda: self.navigate(Screen.TEAMS),
             ).pack(side=tk.LEFT, padx=5, pady=5)
 
@@ -250,23 +230,17 @@ class JeopardyUi:
                 ).pack()
 
         # Buttons
-        tk.Button(
+        create_button(
             self.main_frame,
             text="Show Answer",
-            font=(FONT, 16, "bold"),
-            fg=BTN_TEXT_COLOUR,
-            bg=BTN_COLOUR,
-            activebackground=BTN_ACTIVE_COLOUR,
+            theme=SMALL_BUTTON_THEME,
             command=lambda: self.navigate(Screen.ANSWER, question),
         ).pack(pady=10)
 
-        tk.Button(
+        create_button(
             self.main_frame,
             text="Back to Board",
-            font=(FONT, 16, "bold"),
-            fg=BTN_TEXT_COLOUR,
-            bg=BTN_COLOUR,
-            activebackground=BTN_ACTIVE_COLOUR,
+            theme=SMALL_BUTTON_THEME,
             command=lambda: self.navigate(Screen.BOARD),
         ).pack(pady=10)
 
@@ -316,25 +290,19 @@ class JeopardyUi:
 
         # Buttons for each team
         for team in self.controller.get_teams():
-            tk.Button(
+            create_button(
                 self.main_frame,
-                text=f"{team.name} +${question.value}",
-                font=(FONT, 16, "bold"),
-                fg=BTN_TEXT_COLOUR,
-                bg=BTN_COLOUR,
-                activebackground=BTN_ACTIVE_COLOUR,
-                command=lambda t=team: self._assign_points(question, t),
+                f"{team.name} +${question.value}",
+                lambda t=team: self._assign_points(question, t),
+                SMALL_BUTTON_THEME,
             ).pack(pady=5)
 
         # Optional: Skip assigning points
-        tk.Button(
+        create_button(
             self.main_frame,
-            text="Skip / Back to Board",
-            font=(FONT, 16, "bold"),
-            fg=BTN_TEXT_COLOUR,
-            bg=BTN_COLOUR,
-            activebackground=BTN_ACTIVE_COLOUR,
-            command=lambda: self.navigate(Screen.BOARD),
+            "Skip / Back to Board",
+            lambda: self.navigate(Screen.BOARD),
+            SMALL_BUTTON_THEME,
         ).pack(pady=10)
 
     def _render_teams(self) -> None:
@@ -358,14 +326,11 @@ class JeopardyUi:
             ).pack(pady=10)
 
         # Back button
-        tk.Button(
+        create_button(
             self.main_frame,
-            text="Back to Board",
-            font=(FONT, 16, "bold"),
-            fg=BTN_TEXT_COLOUR,
-            bg=BTN_COLOUR,
-            activebackground=BTN_ACTIVE_COLOUR,
-            command=lambda: self.navigate(Screen.BOARD),
+            "Back to Board",
+            lambda: self.navigate(Screen.BOARD),
+            SMALL_BUTTON_THEME,
         ).pack(pady=20)
 
     def _render_save(self) -> None:
@@ -385,24 +350,18 @@ class JeopardyUi:
             bg=BG_COLOUR,
         ).pack(pady=20)
 
-        tk.Button(
+        create_button(
             self.main_frame,
-            text="Select File and Save",
-            font=(FONT, 16, "bold"),
-            fg=BTN_TEXT_COLOUR,
-            bg=BTN_COLOUR,
-            activebackground=BTN_ACTIVE_COLOUR,
-            command=self._save_board_to_file,
+            "Select File and Save",
+            self._save_board_to_file,
+            SMALL_BUTTON_THEME,
         ).pack(pady=10)
 
-        tk.Button(
+        create_button(
             self.main_frame,
-            text="Back to Main Menu",
-            font=(FONT, 16, "bold"),
-            fg=BTN_TEXT_COLOUR,
-            bg=BTN_COLOUR,
-            activebackground=BTN_ACTIVE_COLOUR,
-            command=lambda: self.navigate(Screen.MAIN_MENU),
+            "Back to Main Menu",
+            lambda: self.navigate(Screen.MAIN_MENU),
+            SMALL_BUTTON_THEME,
         ).pack(pady=20)
 
     def _render_load(self) -> None:
@@ -422,24 +381,18 @@ class JeopardyUi:
             bg=BG_COLOUR,
         ).pack(pady=20)
 
-        tk.Button(
+        create_button(
             self.main_frame,
-            text="Select File and Load",
-            font=(FONT, 16, "bold"),
-            fg=BTN_TEXT_COLOUR,
-            bg=BTN_COLOUR,
-            activebackground=BTN_ACTIVE_COLOUR,
-            command=self._load_board_from_file,
+            "Select File and Load",
+            self._load_board_from_file,
+            SMALL_BUTTON_THEME,
         ).pack(pady=10)
 
-        tk.Button(
+        create_button(
             self.main_frame,
-            text="Back to Main Menu",
-            font=(FONT, 16, "bold"),
-            fg=BTN_TEXT_COLOUR,
-            bg=BTN_COLOUR,
-            activebackground=BTN_ACTIVE_COLOUR,
-            command=lambda: self.navigate(Screen.MAIN_MENU),
+            "Back to Main Menu",
+            lambda: self.navigate(Screen.MAIN_MENU),
+            SMALL_BUTTON_THEME,
         ).pack(pady=20)
 
     def _clear(self) -> None:

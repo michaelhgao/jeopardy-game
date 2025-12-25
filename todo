@@ -1,2 +1,2 @@
-save/load json
-change build menu to use internal game state to draw
+separate views
+abstract themes

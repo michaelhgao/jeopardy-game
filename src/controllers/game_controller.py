@@ -1,8 +1,9 @@
+import json
 from typing import Optional
 
 from src.misc.types import GRID_SIZE, Category, GameMode
 from src.models.jeopardy_game import JeopardyGame
-from src.models.jeopardy_question import JeopardyQuestion, QuestionEdit
+from src.models.question import Question, QuestionEdit
 from src.models.team import Team
 
 
@@ -11,7 +12,7 @@ class GameController:
         self.game = game
         self.mode: GameMode = GameMode.PLAY
         self.current_category: Optional[Category] = None
-        self.current_question: Optional[JeopardyQuestion] = None
+        self.current_question: Optional[Question] = None
 
     def set_mode(self, mode: GameMode) -> None:
         self.mode = mode
@@ -31,10 +32,10 @@ class GameController:
     def get_categories(self) -> list[Category]:
         return self.game.categories
 
-    def add_question(self, category: Category, question: JeopardyQuestion) -> None:
+    def add_question(self, category: Category, question: Question) -> None:
         self.game.add_question(category, question)
 
-    def edit_question(self, question: JeopardyQuestion, edit: QuestionEdit) -> None:
+    def edit_question(self, question: Question, edit: QuestionEdit) -> None:
         self.game.edit_question(question, edit)
 
     def set_current_question(self, category: Category, question_index: int) -> None:
@@ -43,7 +44,7 @@ class GameController:
         self.current_category = category
         self.current_question = category.questions[question_index]
 
-    def get_current_question(self) -> Optional[JeopardyQuestion]:
+    def get_current_question(self) -> Optional[Question]:
         return self.current_question
 
     def add_team(self, name: str, members: list[str]) -> Team:
@@ -58,7 +59,7 @@ class GameController:
     def get_teams(self) -> list[Team]:
         return self.game.teams
 
-    def mark_question_answered(self, question: Optional[JeopardyQuestion]) -> None:
+    def mark_question_answered(self, question: Optional[Question]) -> None:
         if question is None:
             if self.current_question is None:
                 raise ValueError("No question selected")
@@ -67,7 +68,7 @@ class GameController:
         question.mark_answered()
 
     def assign_question_points(
-        self, team: Optional[Team], question: Optional[JeopardyQuestion] = None
+        self, team: Optional[Team], question: Optional[Question] = None
     ) -> None:
         if question is None:
             if self.current_question is None:
@@ -95,9 +96,47 @@ class GameController:
         for category in self.game.categories[:GRID_SIZE]:
             while len(category.questions) < GRID_SIZE:
                 category.questions.append(
-                    JeopardyQuestion(
+                    Question(
                         question="New Question",
                         answer="Answer",
                         value=(len(category.questions) + 1) * 100,
+                    )
+                )
+
+    def export_json(self, file_path: str) -> None:
+        data = {"categories": []}
+        for category in self.game.categories:
+            cat_data = {
+                "name": category.name,
+                "questions": [
+                    {
+                        "question": q.question,
+                        "answer": q.answer,
+                        "value": q.value,
+                        "image_path": q.image_path,
+                    }
+                    for q in category.questions
+                ],
+            }
+            data["categories"].append(cat_data)
+
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+
+    def import_json(self, file_path: str) -> None:
+        with open(file_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        self.game.categories.clear()
+
+        for cat_data in data.get("categories", []):
+            category = self.game.add_category(cat_data["name"])
+            for q_data in cat_data.get("questions", []):
+                category.questions.append(
+                    Question(
+                        question=q_data["question"],
+                        answer=q_data["answer"],
+                        value=q_data["value"],
+                        image_path=q_data.get("image_path"),
                     )
                 )

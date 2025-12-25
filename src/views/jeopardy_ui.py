@@ -1,6 +1,6 @@
 import tkinter as tk
 from enum import Enum, auto
-from tkinter import filedialog, simpledialog
+from tkinter import filedialog, messagebox, simpledialog
 from typing import Optional
 
 from src.controllers.game_controller import GameController
@@ -19,7 +19,7 @@ from src.misc.types import (
     Category,
     GameMode,
 )
-from src.models.jeopardy_question import JeopardyQuestion, QuestionEdit
+from src.models.question import Question, QuestionEdit
 from src.models.team import Team
 
 
@@ -29,6 +29,8 @@ class Screen(Enum):
     QUESTION = auto()
     ANSWER = auto()
     TEAMS = auto()
+    SAVE = auto()
+    LOAD = auto()
 
 
 class JeopardyUi:
@@ -47,7 +49,7 @@ class JeopardyUi:
 
         self.navigate(Screen.MAIN_MENU)
 
-    def navigate(self, screen: Screen, question: Optional[JeopardyQuestion] = None):
+    def navigate(self, screen: Screen, question: Optional[Question] = None):
         self.current_screen = screen
         self.current_question = question
         self._clear()
@@ -67,6 +69,10 @@ class JeopardyUi:
             self._render_answer(question)
         elif screen == Screen.TEAMS:
             self._render_teams()
+        elif screen == Screen.SAVE:
+            self._render_save()
+        elif screen == Screen.LOAD:
+            self._render_load()
 
     def _render_main_menu(self) -> None:
         tk.Label(
@@ -97,6 +103,28 @@ class JeopardyUi:
             bg=BTN_COLOUR,
             activebackground=BTN_ACTIVE_COLOUR,
             command=self._edit_mode,
+        ).pack(pady=10)
+
+        tk.Button(
+            self.main_frame,
+            text="Save Board",
+            width=16,
+            font=(FONT, 36, "bold"),
+            fg=BTN_TEXT_COLOUR,
+            bg=BTN_COLOUR,
+            activebackground=BTN_ACTIVE_COLOUR,
+            command=lambda: self.navigate(Screen.SAVE),
+        ).pack(pady=10)
+
+        tk.Button(
+            self.main_frame,
+            text="Load Board",
+            width=16,
+            font=(FONT, 36, "bold"),
+            fg=BTN_TEXT_COLOUR,
+            bg=BTN_COLOUR,
+            activebackground=BTN_ACTIVE_COLOUR,
+            command=lambda: self.navigate(Screen.LOAD),
         ).pack(pady=10)
 
     def _render_board(self) -> None:
@@ -180,7 +208,7 @@ class JeopardyUi:
                 command=lambda: self.navigate(Screen.TEAMS),
             ).pack(side=tk.LEFT, padx=5, pady=5)
 
-    def _render_question(self, question: JeopardyQuestion) -> None:
+    def _render_question(self, question: Question) -> None:
         # Category and question value
         tk.Label(
             self.main_frame,
@@ -242,7 +270,7 @@ class JeopardyUi:
             command=lambda: self.navigate(Screen.BOARD),
         ).pack(pady=10)
 
-    def _render_answer(self, question: JeopardyQuestion) -> None:
+    def _render_answer(self, question: Question) -> None:
         if not question.answered:
             question.mark_answered()
 
@@ -340,6 +368,80 @@ class JeopardyUi:
             command=lambda: self.navigate(Screen.BOARD),
         ).pack(pady=20)
 
+    def _render_save(self) -> None:
+        tk.Label(
+            self.main_frame,
+            text="Save Board",
+            font=(FONT, 36, "bold"),
+            fg=TITLE_TEXT_COLOUR,
+            bg=BG_COLOUR,
+        ).pack(pady=40)
+
+        tk.Label(
+            self.main_frame,
+            text="Choose a file to save the board:",
+            font=(FONT, 18),
+            fg=BTN_TEXT_COLOUR,
+            bg=BG_COLOUR,
+        ).pack(pady=20)
+
+        tk.Button(
+            self.main_frame,
+            text="Select File and Save",
+            font=(FONT, 16, "bold"),
+            fg=BTN_TEXT_COLOUR,
+            bg=BTN_COLOUR,
+            activebackground=BTN_ACTIVE_COLOUR,
+            command=self._save_board_to_file,
+        ).pack(pady=10)
+
+        tk.Button(
+            self.main_frame,
+            text="Back to Main Menu",
+            font=(FONT, 16, "bold"),
+            fg=BTN_TEXT_COLOUR,
+            bg=BTN_COLOUR,
+            activebackground=BTN_ACTIVE_COLOUR,
+            command=lambda: self.navigate(Screen.MAIN_MENU),
+        ).pack(pady=20)
+
+    def _render_load(self) -> None:
+        tk.Label(
+            self.main_frame,
+            text="Load Board",
+            font=(FONT, 36, "bold"),
+            fg=TITLE_TEXT_COLOUR,
+            bg=BG_COLOUR,
+        ).pack(pady=40)
+
+        tk.Label(
+            self.main_frame,
+            text="Select a JSON file to load a board:",
+            font=(FONT, 18),
+            fg=BTN_TEXT_COLOUR,
+            bg=BG_COLOUR,
+        ).pack(pady=20)
+
+        tk.Button(
+            self.main_frame,
+            text="Select File and Load",
+            font=(FONT, 16, "bold"),
+            fg=BTN_TEXT_COLOUR,
+            bg=BTN_COLOUR,
+            activebackground=BTN_ACTIVE_COLOUR,
+            command=self._load_board_from_file,
+        ).pack(pady=10)
+
+        tk.Button(
+            self.main_frame,
+            text="Back to Main Menu",
+            font=(FONT, 16, "bold"),
+            fg=BTN_TEXT_COLOUR,
+            bg=BTN_COLOUR,
+            activebackground=BTN_ACTIVE_COLOUR,
+            command=lambda: self.navigate(Screen.MAIN_MENU),
+        ).pack(pady=20)
+
     def _clear(self) -> None:
         for widget in self.main_frame.winfo_children():
             widget.destroy()
@@ -382,7 +484,7 @@ class JeopardyUi:
         self.controller.edit_category(category.name, new_name)
         self.navigate(Screen.BOARD)
 
-    def _edit_question(self, question: JeopardyQuestion) -> None:
+    def _edit_question(self, question: Question) -> None:
         q_text: Optional[str] = simpledialog.askstring(
             "Question",
             "Question:",
@@ -418,6 +520,34 @@ class JeopardyUi:
 
         self.navigate(Screen.BOARD)
 
-    def _assign_points(self, question: JeopardyQuestion, team: Team) -> None:
+    def _assign_points(self, question: Question, team: Team) -> None:
         self.controller.assign_question_points(team, question)
         self.navigate(Screen.BOARD)
+
+    def _save_board_to_file(self):
+        file_path = filedialog.asksaveasfilename(
+            title="Save Board",
+            defaultextension=".json",
+            filetypes=[("JSON Files", "*.json")],
+        )
+
+        if file_path:
+            try:
+                self.controller.export_json(file_path)
+                messagebox.showinfo("Saved", f"Board saved to {file_path}")
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to save board: {e}")
+        self.navigate(Screen.MAIN_MENU)
+
+    def _load_board_from_file(self):
+        file_path = filedialog.askopenfilename(
+            title="Load Board",
+            filetypes=[("JSON Files", "*.json")],
+        )
+        if file_path:
+            try:
+                self.controller.import_json(file_path)
+                messagebox.showinfo("Loaded", f"Board loaded from {file_path}")
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to load board: {e}")
+        self.navigate(Screen.MAIN_MENU)

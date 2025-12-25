@@ -1,7 +1,7 @@
 from typing import Optional
 
 from src.misc.types import Category
-from src.models.jeopardy_question import JeopardyQuestion, QuestionEdit
+from src.models.question import Question, QuestionEdit
 from src.models.team import Team
 
 
@@ -42,15 +42,15 @@ class JeopardyGame:
 
         raise KeyError(old_name)
 
-    def add_question(self, category: Category, question: JeopardyQuestion) -> None:
+    def add_question(self, category: Category, question: Question) -> None:
         category.questions.append(question)
 
-    def get_question(self, category: Category, index: int) -> JeopardyQuestion:
+    def get_question(self, category: Category, index: int) -> Question:
         return category.questions[index]
 
     def edit_question(
         self,
-        question: JeopardyQuestion,
+        question: Question,
         new: QuestionEdit,
         image_path: Optional[str] = None,
     ) -> None:
@@ -78,8 +78,6 @@ class JeopardyGame:
     def clear_teams(self) -> None:
         self.teams.clear()
 
-    def assign_question_points(
-        self, team: Optional[Team], question: JeopardyQuestion
-    ) -> None:
+    def assign_question_points(self, team: Optional[Team], question: Question) -> None:
         if team:
             team.add_points(question.value)

@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from typing import Final
 
-from src.models.jeopardy_question import JeopardyQuestion
+from src.models.question import Question
 
 
 class GameMode(Enum):
@@ -13,7 +13,7 @@ class GameMode(Enum):
 @dataclass
 class Category:
     name: str
-    questions: list[JeopardyQuestion]
+    questions: list[Question]
 
 
 GRID_SIZE = 5

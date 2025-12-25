@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 
-class JeopardyQuestion:
+class Question:
     def __init__(
         self, question: str, answer: str, value: int, image_path: Optional[str] = None
     ) -> None:

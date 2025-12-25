@@ -58,7 +58,15 @@ class GameController:
     def get_teams(self) -> list[Team]:
         return self.game.teams
 
-    def resolve_question(
+    def mark_question_answered(self, question: Optional[JeopardyQuestion]) -> None:
+        if question is None:
+            if self.current_question is None:
+                raise ValueError("No question selected")
+            question = self.current_question
+
+        question.mark_answered()
+
+    def assign_question_points(
         self, team: Optional[Team], question: Optional[JeopardyQuestion] = None
     ) -> None:
         if question is None:
@@ -66,7 +74,7 @@ class GameController:
                 raise ValueError("No question selected")
             question = self.current_question
 
-        self.game.resolve_question(team, question)
+        self.game.assign_question_points(team, question)
 
         self.current_question = None
         self.current_category = None

@@ -31,6 +31,7 @@ TITLE_TEXT_COLOUR: Final[str] = "#FFFFFF"
 BTN_TEXT_COLOUR: Final[str] = "#FFFFFF"
 CATEGORY_TEXT_COLOUR: Final[str] = "#FFFFFF"
 QUESTION_TEXT_COLOUR: Final[str] = "#FFCC00"
+ANSWER_TEXT_COLOUR: Final[str] = "#11AA11"
 
 # Font
 FONT: Final[str] = "Arial"

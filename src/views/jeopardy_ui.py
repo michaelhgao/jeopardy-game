@@ -5,6 +5,7 @@ from typing import Optional
 
 from src.controllers.game_controller import GameController
 from src.misc.types import (
+    ANSWER_TEXT_COLOUR,
     BG_COLOUR,
     BTN_ACTIVE_COLOUR,
     BTN_COLOUR,
@@ -44,17 +45,30 @@ class JeopardyUi:
 
         self._images: list = []
 
-        self._build_main_menu()
+        self.navigate(Screen.MAIN_MENU)
 
-    def _clear(self) -> None:
-        for widget in self.main_frame.winfo_children():
-            widget.destroy()
-        self._images.clear()
-
-    def _build_main_menu(self) -> None:
+    def navigate(self, screen: Screen, question: Optional[JeopardyQuestion] = None):
+        self.current_screen = screen
+        self.current_question = question
         self._clear()
         self.main_frame.config(bg=BG_COLOUR)
 
+        if screen == Screen.MAIN_MENU:
+            self._render_main_menu()
+        elif screen == Screen.BOARD:
+            self._render_board()
+        elif screen == Screen.QUESTION:
+            if question is None:
+                raise ValueError("Question must be provided for QUESTION screen")
+            self._render_question(question)
+        elif screen == Screen.ANSWER:
+            if question is None:
+                raise ValueError("Question must be provided for ANSWER screen")
+            self._render_answer(question)
+        elif screen == Screen.TEAMS:
+            self._render_teams()
+
+    def _render_main_menu(self) -> None:
         tk.Label(
             self.main_frame,
             text="JEOPARDY",
@@ -85,42 +99,9 @@ class JeopardyUi:
             command=self._edit_mode,
         ).pack(pady=10)
 
-    def _play_mode(self):
-        self.controller.set_mode(GameMode.PLAY)
-        self._setup_teams()
-
-    def _edit_mode(self):
-        self.controller.set_mode(GameMode.EDIT)
-        self._build_board()
-
-    def _setup_teams(self) -> None:
-        self.controller.clear_teams()
-
-        num_teams: Optional[int] = simpledialog.askinteger(
-            "Teams", "How many teams? (1-10)", minvalue=1, maxvalue=10
-        )
-        if not num_teams:
-            return
-
-        for i in range(num_teams):
-            team_name: Optional[str] = simpledialog.askstring(
-                "Team Name", f"Enter name for Team {i + 1}:"
-            )
-            if not team_name:
-                team_name = f"Team {i + 1}"
-            self.controller.add_team(team_name, [])
-
-        self._build_board()
-
-    def _build_board(self) -> None:
-        self._clear()
-        self.category_buttons.clear()
-        self.question_buttons.clear()
-        self.main_frame.config(bg=BG_COLOUR)
-
-        editable = self.controller.get_mode() == GameMode.EDIT
-
+    def _render_board(self) -> None:
         self.controller.ensure_minimum_board()
+        editable = self.controller.get_mode() == GameMode.EDIT
 
         categories = self.controller.get_categories()[:GRID_SIZE]
 
@@ -157,7 +138,9 @@ class JeopardyUi:
                     bg=BTN_COLOUR if not q.answered else QUESTION_ANSWERED_COLOUR,
                     font=(FONT, 24, "bold"),
                     command=lambda q=q, editable=editable: (
-                        self._edit_question(q) if editable else self._show_question(q)
+                        self._edit_question(q)
+                        if editable
+                        else self.navigate(Screen.QUESTION, q)
                     ),
                 )
                 btn.grid(row=row + 1, column=col, sticky="nsew", padx=2, pady=2)
@@ -182,7 +165,7 @@ class JeopardyUi:
             height=1,
             bg=BTN_COLOUR,
             fg=BTN_TEXT_COLOUR,
-            command=self._build_main_menu,
+            command=lambda: self.navigate(Screen.MAIN_MENU),
         ).pack(side=tk.LEFT, padx=5, pady=5)
 
         if not editable:
@@ -194,58 +177,10 @@ class JeopardyUi:
                 height=1,
                 bg=BTN_COLOUR,
                 fg=BTN_TEXT_COLOUR,
-                command=self._show_teams_points,
+                command=lambda: self.navigate(Screen.TEAMS),
             ).pack(side=tk.LEFT, padx=5, pady=5)
 
-    def _edit_category(self, category: Category) -> None:
-        new_name: Optional[str] = simpledialog.askstring(
-            "Edit Category", f"Rename '{category.name}':"
-        )
-        if new_name is None:
-            return
-
-        self.controller.edit_category(category.name, new_name)
-        self._build_board()
-
-    def _edit_question(self, question: JeopardyQuestion) -> None:
-        q_text: Optional[str] = simpledialog.askstring(
-            "Question",
-            "Question:",
-            initialvalue=question.question,
-        )
-        if q_text is None:
-            return
-
-        a_text: Optional[str] = simpledialog.askstring(
-            "Answer",
-            "Answer:",
-            initialvalue=question.answer,
-        )
-        if a_text is None:
-            return
-
-        value: Optional[int] = simpledialog.askinteger(
-            "Value",
-            "Point value:",
-            initialvalue=question.value,
-        )
-        if value is None:
-            return
-
-        image_path: Optional[str] = filedialog.askopenfilename(
-            title="Select image",
-            filetypes=[("Image Files", "*.png *.jpg *.jpeg *.gif")],
-        )
-
-        q_edit: QuestionEdit = QuestionEdit(q_text, a_text, value, image_path)
-
-        self.controller.edit_question(question, q_edit)
-
-        self._build_board()
-
-    def _show_question(self, question: JeopardyQuestion) -> None:
-        self._clear()
-
+    def _render_question(self, question: JeopardyQuestion) -> None:
         # Category and question value
         tk.Label(
             self.main_frame,
@@ -294,7 +229,7 @@ class JeopardyUi:
             fg=BTN_TEXT_COLOUR,
             bg=BTN_COLOUR,
             activebackground=BTN_ACTIVE_COLOUR,
-            command=lambda q=question: self._show_answer(q),
+            command=lambda: self.navigate(Screen.ANSWER, question),
         ).pack(pady=10)
 
         tk.Button(
@@ -304,13 +239,12 @@ class JeopardyUi:
             fg=BTN_TEXT_COLOUR,
             bg=BTN_COLOUR,
             activebackground=BTN_ACTIVE_COLOUR,
-            command=lambda: self._build_board,
+            command=lambda: self.navigate(Screen.BOARD),
         ).pack(pady=10)
 
-    def _show_answer(self, question: JeopardyQuestion) -> None:
-        self._clear()
-
-        self.controller.resolve_question(None, question)
+    def _render_answer(self, question: JeopardyQuestion) -> None:
+        if not question.answered:
+            question.mark_answered()
 
         # Question value
         tk.Label(
@@ -337,7 +271,7 @@ class JeopardyUi:
             self.main_frame,
             text=f"Answer: {question.answer}",
             font=(FONT, 24, "bold"),
-            fg="green",
+            fg=ANSWER_TEXT_COLOUR,
             bg=BG_COLOUR,
             wraplength=1000,
             justify="center",
@@ -372,16 +306,10 @@ class JeopardyUi:
             fg=BTN_TEXT_COLOUR,
             bg=BTN_COLOUR,
             activebackground=BTN_ACTIVE_COLOUR,
-            command=lambda: self._build_board,
+            command=lambda: self.navigate(Screen.BOARD),
         ).pack(pady=10)
 
-    def _assign_points(self, question: JeopardyQuestion, team: Team) -> None:
-        self.controller.resolve_question(team, question)
-        self._build_board()
-
-    def _show_teams_points(self) -> None:
-        self._clear()
-
+    def _render_teams(self) -> None:
         # Title
         tk.Label(
             self.main_frame,
@@ -409,5 +337,87 @@ class JeopardyUi:
             fg=BTN_TEXT_COLOUR,
             bg=BTN_COLOUR,
             activebackground=BTN_ACTIVE_COLOUR,
-            command=lambda: self._build_board,
+            command=lambda: self.navigate(Screen.BOARD),
         ).pack(pady=20)
+
+    def _clear(self) -> None:
+        for widget in self.main_frame.winfo_children():
+            widget.destroy()
+        self._images.clear()
+
+    def _play_mode(self):
+        self.controller.set_mode(GameMode.PLAY)
+        self._setup_teams()
+
+    def _edit_mode(self):
+        self.controller.set_mode(GameMode.EDIT)
+        self.navigate(Screen.BOARD)
+
+    def _setup_teams(self) -> None:
+        self.controller.clear_teams()
+
+        num_teams: Optional[int] = simpledialog.askinteger(
+            "Teams", "How many teams? (1-10)", minvalue=1, maxvalue=10
+        )
+        if not num_teams:
+            return
+
+        for i in range(num_teams):
+            team_name: Optional[str] = simpledialog.askstring(
+                "Team Name", f"Enter name for Team {i + 1}:"
+            )
+            if not team_name:
+                team_name = f"Team {i + 1}"
+            self.controller.add_team(team_name, [])
+
+        self.navigate(Screen.BOARD)
+
+    def _edit_category(self, category: Category) -> None:
+        new_name: Optional[str] = simpledialog.askstring(
+            "Edit Category", f"Rename '{category.name}':"
+        )
+        if new_name is None:
+            return
+
+        self.controller.edit_category(category.name, new_name)
+        self.navigate(Screen.BOARD)
+
+    def _edit_question(self, question: JeopardyQuestion) -> None:
+        q_text: Optional[str] = simpledialog.askstring(
+            "Question",
+            "Question:",
+            initialvalue=question.question,
+        )
+        if q_text is None:
+            return
+
+        a_text: Optional[str] = simpledialog.askstring(
+            "Answer",
+            "Answer:",
+            initialvalue=question.answer,
+        )
+        if a_text is None:
+            return
+
+        value: Optional[int] = simpledialog.askinteger(
+            "Value",
+            "Point value:",
+            initialvalue=question.value,
+        )
+        if value is None:
+            return
+
+        image_path: Optional[str] = filedialog.askopenfilename(
+            title="Select image",
+            filetypes=[("Image Files", "*.png *.jpg *.jpeg *.gif")],
+        )
+
+        q_edit: QuestionEdit = QuestionEdit(q_text, a_text, value, image_path)
+
+        self.controller.edit_question(question, q_edit)
+
+        self.navigate(Screen.BOARD)
+
+    def _assign_points(self, question: JeopardyQuestion, team: Team) -> None:
+        self.controller.assign_question_points(team, question)
+        self.navigate(Screen.BOARD)

@@ -78,13 +78,8 @@ class JeopardyGame:
     def clear_teams(self) -> None:
         self.teams.clear()
 
-    def resolve_question(
+    def assign_question_points(
         self, team: Optional[Team], question: JeopardyQuestion
     ) -> None:
-        if question.answered:
-            raise ValueError("Question already answered")
-
         if team:
             team.add_points(question.value)
-
-        question.mark_answered()

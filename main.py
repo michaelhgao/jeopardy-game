@@ -1,10 +1,12 @@
 import tkinter as tk
 
-from src.jeopardy_game import JeopardyGame
-from src.jeopardy_ui import JeopardyUi
+from src.controllers.game_controller import GameController
+from src.models.jeopardy_game import JeopardyGame
+from src.views.jeopardy_ui import JeopardyUi
 
 
 def main() -> None:
+    # Create the root window
     root = tk.Tk()
 
     # Launch maximized
@@ -13,9 +15,14 @@ def main() -> None:
     except tk.TclError:
         root.attributes("-zoomed", True)
 
+    # Initialize the game and controller
     game = JeopardyGame()
-    JeopardyUi(root, game)
+    controller = GameController(game)
 
+    # Launch the UI with the controller
+    JeopardyUi(root, controller)
+
+    # Start the Tkinter event loop
     root.mainloop()
 
 

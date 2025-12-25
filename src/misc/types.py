@@ -1,11 +1,22 @@
+from dataclasses import dataclass
 from enum import Enum, auto
 from typing import Final
+
+from src.models.jeopardy_question import JeopardyQuestion
 
 
 class GameMode(Enum):
     PLAY = auto()
     EDIT = auto()
 
+
+@dataclass
+class Category:
+    name: str
+    questions: list[JeopardyQuestion]
+
+
+GRID_SIZE = 5
 
 # Background color
 BG_COLOUR: Final[str] = "#060CE9"

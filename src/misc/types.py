@@ -27,3 +27,5 @@ class Screen(Enum):
     TEAMS = auto()
     SAVE = auto()
     LOAD = auto()
+    EDIT_QUESTION = auto()
+    EDIT_CATEGORY = auto()

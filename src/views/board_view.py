@@ -1,6 +1,4 @@
 import tkinter as tk
-from tkinter import filedialog, simpledialog
-from typing import Optional
 
 from src.misc.button_factory import create_button
 from src.misc.themes import (
@@ -12,7 +10,7 @@ from src.misc.themes import (
     SMALL_BUTTON_THEME,
 )
 from src.misc.types import GRID_SIZE, Category, GameMode, Screen
-from src.models.question import Question, QuestionEdit
+from src.models.question import Question
 from src.views.base_view import BaseView
 
 
@@ -101,43 +99,13 @@ class BoardView(BaseView):
             self.ui_controller.navigate(Screen.QUESTION, question=question)
 
     def _edit_category(self, category: Category) -> None:
-        new_name = simpledialog.askstring("Edit Category", f"Rename '{category.name}':")
-        if new_name:
-            self.game_controller.edit_category(category.name, new_name)
-            self.ui_controller.navigate(Screen.BOARD)
+        self.ui_controller.navigate(
+            Screen.EDIT_CATEGORY,
+            category=category,
+        )
 
     def _edit_question(self, question: Question) -> None:
-        q_text: Optional[str] = simpledialog.askstring(
-            "Question",
-            "Question:",
-            initialvalue=question.question,
+        self.ui_controller.navigate(
+            Screen.EDIT_QUESTION,
+            question=question,
         )
-        if q_text is None:
-            return
-
-        a_text: Optional[str] = simpledialog.askstring(
-            "Answer",
-            "Answer:",
-            initialvalue=question.answer,
-        )
-        if a_text is None:
-            return
-
-        value: Optional[int] = simpledialog.askinteger(
-            "Value",
-            "Point value:",
-            initialvalue=question.value,
-        )
-        if value is None:
-            return
-
-        image_path: Optional[str] = filedialog.askopenfilename(
-            title="Select image",
-            filetypes=[("Image Files", "*.png *.jpg *.jpeg *.gif")],
-        )
-
-        q_edit: QuestionEdit = QuestionEdit(q_text, a_text, value, image_path)
-
-        self.game_controller.edit_question(question, q_edit)
-
-        self.ui_controller.navigate(Screen.BOARD)

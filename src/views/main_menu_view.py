@@ -10,6 +10,8 @@ class MainMenuView(BaseView):
     def render(self, **kwargs) -> None:
         self.clear()
 
+        self.root.configure(bg=BG_COLOUR)
+
         tk.Label(
             self.root,
             text="JEOPARDY",
@@ -35,14 +37,14 @@ class MainMenuView(BaseView):
         create_button(
             self.root,
             text="Save Board",
-            command=lambda: self._save_board,
+            command=self._save_board,
             theme=MAIN_MENU_BUTTON_THEME,
         ).pack(pady=10)
 
         create_button(
             self.root,
             text="Load Board",
-            command=lambda: self._load_board,
+            command=self._load_board,
             theme=MAIN_MENU_BUTTON_THEME,
         ).pack(pady=10)
 

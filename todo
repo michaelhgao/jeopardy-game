@@ -1,1 +1,5 @@
 relative paths for images and stuff
+make buzzing better like this:
+    show who buzzed at the bottom bar
+    user selects their team name, then is moved to a buzzer button
+    app has a way to reset buzzer, users dont

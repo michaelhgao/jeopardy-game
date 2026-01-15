@@ -16,3 +16,14 @@ class Category:
 
 
 GRID_SIZE = 5
+
+
+class Screen(Enum):
+    MAIN_MENU = auto()
+    BOARD = auto()
+    QUESTION = auto()
+    ANSWER = auto()
+    SETUP_TEAMS = auto()
+    TEAMS = auto()
+    SAVE = auto()
+    LOAD = auto()

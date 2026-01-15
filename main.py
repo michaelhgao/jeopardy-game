@@ -1,8 +1,9 @@
 import tkinter as tk
 
 from src.controllers.game_controller import GameController
+from src.controllers.ui_controller import UiController
+from src.misc.types import Screen
 from src.models.jeopardy_game import JeopardyGame
-from src.views.jeopardy_ui import JeopardyUi
 
 
 def main() -> None:
@@ -17,10 +18,11 @@ def main() -> None:
 
     # Initialize the game and controller
     game = JeopardyGame()
-    controller = GameController(game)
+    game_controller = GameController(game)
+    ui_controller = UiController(root, game_controller)
 
     # Launch the UI with the controller
-    JeopardyUi(root, controller)
+    ui_controller.navigate(Screen.MAIN_MENU)
 
     # Start the Tkinter event loop
     root.mainloop()

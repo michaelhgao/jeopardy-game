@@ -1,5 +1,4 @@
 import tkinter as tk
-from enum import Enum, auto
 from tkinter import filedialog, messagebox, simpledialog
 from typing import Optional
 
@@ -19,19 +18,9 @@ from src.misc.themes import (
     SMALL_BUTTON_THEME,
     TITLE_TEXT_COLOUR,
 )
-from src.misc.types import GRID_SIZE, Category, GameMode
+from src.misc.types import GRID_SIZE, Category, GameMode, Screen
 from src.models.question import Question, QuestionEdit
 from src.models.team import Team
-
-
-class Screen(Enum):
-    MAIN_MENU = auto()
-    BOARD = auto()
-    QUESTION = auto()
-    ANSWER = auto()
-    TEAMS = auto()
-    SAVE = auto()
-    LOAD = auto()
 
 
 class JeopardyUi:

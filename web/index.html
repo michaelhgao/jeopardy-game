@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Jeopardy Buzz</title>
+</head>
+<body>
+  <h1>Buzz In!</h1>
+  <select id="teamSelect"></select>
+  <button onclick="buzz()">Buzz!</button>
+  <button onclick="resetBuzz()">Reset Buzz</button>
+
+  <p id="status"></p>
+
+  <script>
+    const teamSelect = document.getElementById("teamSelect");
+    const status = document.getElementById("status");
+
+    async function loadTeams() {
+      const res = await fetch("/teams");
+      const data = await res.json();
+      teamSelect.innerHTML = data.teams.map(t => `<option value="${t}">${t}</option>`).join("");
+    }
+
+    async function buzz() {
+      const team = teamSelect.value;
+      const res = await fetch("/buzz", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({team})
+      });
+      const data = await res.json();
+      if (res.ok) {
+        status.innerText = `Buzzed: ${data.team}`;
+      } else {
+        status.innerText = data.message;
+      }
+    }
+
+    async function resetBuzz() {
+      await fetch("/reset_buzz", {method: "POST"});
+      status.innerText = "Buzz reset";
+    }
+
+    loadTeams();
+  </script>
+</body>
+</html>
